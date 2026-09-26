@@ -1,0 +1,47 @@
+package com.example.videoviewactivity;
+
+import android.net.Uri;
+import android.os.Bundle;
+import android.widget.MediaController;
+import android.widget.VideoView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class VideoViewActivity extends AppCompatActivity {
+
+    VideoView videoView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Connect XML layout
+        setContentView(R.layout.activity_video_view);
+
+        // Find VideoView
+        videoView = findViewById(R.id.videoView);
+
+        // Create MediaController
+        MediaController controller = new MediaController(this);
+
+        // Attach controller to VideoView
+        videoView.setMediaController(controller);
+
+        // Set controller anchor
+        controller.setAnchorView(videoView);
+
+        // Get video from res/raw folder
+        Uri video = Uri.parse(
+                "android.resource://" +
+                        getPackageName() +
+                        "/" +
+                        R.raw.sample
+        );
+
+        // Set video URI
+        videoView.setVideoURI(video);
+
+        // Start video
+        videoView.start();
+    }
+}
