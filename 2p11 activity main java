@@ -1,0 +1,96 @@
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity
+        implements SensorEventListener {
+
+    TextView tvX, tvY;
+
+    SensorManager sensorManager;
+    Sensor accel;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        EdgeToEdge.enable(this);
+
+        setContentView(R.layout.activity_main);
+
+        // Initialize TextViews
+        tvX = findViewById(R.id.tvX);
+        tvY = findViewById(R.id.tvY);
+
+        // Get Sensor Manager
+        sensorManager =
+                (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        // Get Accelerometer Sensor
+        accel = sensorManager.getDefaultSensor(
+                Sensor.TYPE_ACCELEROMETER
+        );
+
+        // Check whether accelerometer is available
+        if (accel == null) {
+            Toast.makeText(
+                    this,
+                    "Accelerometer is not available on this device",
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (accel != null) {
+            sensorManager.registerListener(
+                    this,
+                    accel,
+                    SensorManager.SENSOR_DELAY_NORMAL
+            );
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Stop listening to sensor
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+
+            float x = event.values[0];
+            float y = event.values[1];
+
+            tvX.setText(
+                    "X Value: " + x
+            );
+
+            tvY.setText(
+                    "Y Value: " + y
+            );
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(
+            Sensor sensor,
+            int accuracy) {
+        // No action required
+    }
+}
