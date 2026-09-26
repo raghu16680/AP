@@ -1,0 +1,203 @@
+package com.example.audiorecorder;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class AudioRecorder extends AppCompatActivity {
+
+    Button start, stop, play;
+    MediaRecorder recorder;
+    MediaPlayer player;
+    String path;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_audio_recorder);
+
+        // Request microphone permission
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(
+                    new String[]{Manifest.permission.RECORD_AUDIO},
+                    1
+            );
+        }
+
+        start = findViewById(R.id.Record);
+        stop = findViewById(R.id.Stop);
+        play = findViewById(R.id.Play);
+
+        // Save recording inside app-specific external storage
+        path = getExternalFilesDir(null) + "/recording.3gp";
+
+        // Initial button states
+        stop.setEnabled(false);
+        play.setEnabled(false);
+
+        // Record button
+        start.setOnClickListener(v -> {
+
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                Toast.makeText(
+                        this,
+                        "Microphone permission is required",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+                requestPermissions(
+                        new String[]{Manifest.permission.RECORD_AUDIO},
+                        1
+                );
+
+                return;
+            }
+
+            try {
+                recorder = new MediaRecorder();
+
+                recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                recorder.setOutputFormat(
+                        MediaRecorder.OutputFormat.THREE_GPP
+                );
+                recorder.setAudioEncoder(
+                        MediaRecorder.AudioEncoder.AMR_NB
+                );
+                recorder.setOutputFile(path);
+
+                recorder.prepare();
+                recorder.start();
+
+                start.setEnabled(false);
+                stop.setEnabled(true);
+                play.setEnabled(false);
+
+                Toast.makeText(
+                        this,
+                        "Recording Started",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+            } catch (Exception e) {
+                Toast.makeText(
+                        this,
+                        "Recording failed: " + e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
+
+                if (recorder != null) {
+                    recorder.release();
+                    recorder = null;
+                }
+            }
+        });
+
+        // Stop button
+        stop.setOnClickListener(v -> {
+
+            if (recorder != null) {
+
+                try {
+                    recorder.stop();
+
+                    Toast.makeText(
+                            this,
+                            "Recording Stopped",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                } catch (RuntimeException e) {
+
+                    Toast.makeText(
+                            this,
+                            "Recording could not be saved",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+
+                recorder.release();
+                recorder = null;
+            }
+
+            start.setEnabled(true);
+            stop.setEnabled(false);
+            play.setEnabled(true);
+        });
+
+        // Play button
+        play.setOnClickListener(v -> {
+
+            try {
+                player = new MediaPlayer();
+
+                player.setDataSource(path);
+                player.prepare();
+                player.start();
+
+                play.setEnabled(false);
+
+                Toast.makeText(
+                        this,
+                        "Playing Recording",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+                // Enable Play button after playback finishes
+                player.setOnCompletionListener(mp -> {
+                    play.setEnabled(true);
+                    mp.release();
+                    player = null;
+                });
+
+            } catch (Exception e) {
+
+                Toast.makeText(
+                        this,
+                        "Playback failed: " + e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
+
+                if (player != null) {
+                    player.release();
+                    player = null;
+                }
+
+                play.setEnabled(true);
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (recorder != null) {
+            try {
+                recorder.stop();
+            } catch (Exception ignored) {
+            }
+
+            recorder.release();
+            recorder = null;
+        }
+
+        if (player != null) {
+            if (player.isPlaying()) {
+                player.stop();
+            }
+
+            player.release();
+            player = null;
+        }
+    }
+}
