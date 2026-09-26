@@ -1,0 +1,45 @@
+import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    AutoCompleteTextView actv;
+
+    String[] courses = {
+            "BCA",
+            "BBA",
+            "B.Com",
+            "B.Sc",
+            "BA",
+            "MCA",
+            "MBA",
+            "M.Com",
+            "M.Sc"
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_main);
+
+        // Connect AutoCompleteTextView
+        actv = findViewById(R.id.actvUi);
+
+        // Create adapter
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                courses
+        );
+
+        // Show suggestions after typing 1 character
+        actv.setThreshold(1);
+
+        // Attach adapter
+        actv.setAdapter(adapter);
+    }
+}
