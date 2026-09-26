@@ -1,0 +1,179 @@
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class SQLiteActivity extends AppCompatActivity {
+
+    EditText id, name;
+    TextView result;
+    SQLiteDatabase db;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_sqlite);
+
+        // Connect XML components
+        id = findViewById(R.id.id);
+        name = findViewById(R.id.name);
+        result = findViewById(R.id.result);
+
+        Button insert = findViewById(R.id.insert);
+        Button display = findViewById(R.id.display);
+        Button update = findViewById(R.id.update);
+        Button delete = findViewById(R.id.delete);
+
+        // Create/Open database
+        db = openOrCreateDatabase(
+                "StudentDB2",
+                MODE_PRIVATE,
+                null
+        );
+
+        // Create table
+        db.execSQL(
+                "CREATE TABLE IF NOT EXISTS student (" +
+                        "id INTEGER PRIMARY KEY, " +
+                        "name TEXT)"
+        );
+
+        // INSERT
+        insert.setOnClickListener(v -> {
+
+            String studentId = id.getText().toString();
+            String studentName = name.getText().toString();
+
+            if (studentId.isEmpty() || studentName.isEmpty()) {
+                Toast.makeText(
+                        SQLiteActivity.this,
+                        "Enter ID and Name",
+                        Toast.LENGTH_SHORT
+                ).show();
+                return;
+            }
+
+            try {
+                db.execSQL(
+                        "INSERT INTO student VALUES (?, ?)",
+                        new String[]{
+                                studentId,
+                                studentName
+                        }
+                );
+
+                Toast.makeText(
+                        SQLiteActivity.this,
+                        "Inserted Successfully",
+                        Toast.LENGTH_SHORT
+                ).show();
+
+            } catch (Exception e) {
+
+                Toast.makeText(
+                        SQLiteActivity.this,
+                        "ID already exists",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
+
+        // DISPLAY
+        display.setOnClickListener(v -> {
+
+            Cursor cursor = db.rawQuery(
+                    "SELECT * FROM student",
+                    null
+            );
+
+            StringBuilder data = new StringBuilder();
+
+            while (cursor.moveToNext()) {
+
+                data.append(cursor.getInt(0))
+                        .append(" - ")
+                        .append(cursor.getString(1))
+                        .append("\n");
+            }
+
+            cursor.close();
+
+            if (data.length() == 0) {
+                result.setText("No records found");
+            } else {
+                result.setText(data.toString());
+            }
+        });
+
+        // UPDATE
+        update.setOnClickListener(v -> {
+
+            String studentId = id.getText().toString();
+            String studentName = name.getText().toString();
+
+            if (studentId.isEmpty() || studentName.isEmpty()) {
+                Toast.makeText(
+                        SQLiteActivity.this,
+                        "Enter ID and Name",
+                        Toast.LENGTH_SHORT
+                ).show();
+                return;
+            }
+
+            db.execSQL(
+                    "UPDATE student SET name=? WHERE id=?",
+                    new String[]{
+                            studentName,
+                            studentId
+                    }
+            );
+
+            Toast.makeText(
+                    SQLiteActivity.this,
+                    "Updated Successfully",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
+
+        // DELETE
+        delete.setOnClickListener(v -> {
+
+            String studentId = id.getText().toString();
+
+            if (studentId.isEmpty()) {
+                Toast.makeText(
+                        SQLiteActivity.this,
+                        "Enter ID",
+                        Toast.LENGTH_SHORT
+                ).show();
+                return;
+            }
+
+            db.execSQL(
+                    "DELETE FROM student WHERE id=?",
+                    new String[]{studentId}
+            );
+
+            Toast.makeText(
+                    SQLiteActivity.this,
+                    "Deleted Successfully",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
+    }
+}
